@@ -1,0 +1,314 @@
+---
+title: "Trabalho Statistics Fundamentals - Trab 4"
+output: html_notebook
+---
+
+Descrição:
+
+Os sistemas de compartilhamento de bicicletas são uma nova geração de aluguel de bicicletas tradicional, onde todo o processo de associação, locação e devolução tornou-se automático. Através destes sistemas, o usuário pode facilmente alugar uma bicicleta a partir de uma determinada posição e retornar em outra posição. Atualmente, existem cerca de 500 programas de compartilhamento de bicicletas em todo o mundo, compostos por mais de 500 mil bicicletas. Hoje, existe um grande interesse nesses sistemas devido ao seu importante papel no trânsito, questões ambientais e de saúde.
+
+Fonte de dados: https://archive.ics.uci.edu/ml/datasets/Bike+Sharing+Dataset
+
+```{r}
+```
+
+- Carregando pacotes
+
+```{r}
+#install.packages("corrplot")
+library(tidyverse)
+library(readr)
+library(corrplot)
+```
+
+- Carregando a base de dados
+
+```{r}
+ds <- read_csv("Bike_Sharing.csv", show_col_types = FALSE)
+options(scipe = 999)
+attach(ds)
+```
+
+- Acertando o tipo de variável
+
+Variáveis categoricas
+
+```{r}
+ds$season <- as.factor(ds$season)
+ds$yr <- as.factor(ds$yr)
+ds$holiday <- as.factor(ds$holiday)
+ds$weekday <- as.factor(ds$weekday)
+ds$workingday <- as.factor(ds$workingday)
+ds$weathersit <- as.factor(ds$weathersit)
+ds$mnth <- as.factor(ds$mnth)
+```
+
+- Apresentando dados estatistico da base de dados
+
+```{r}
+summary(ds)
+```
+
+- Analisando feriados 
+
+No total da amostra, tiveram 21 feriados e 710 dias normais
+
+```{r}
+fa_holiday = table(holiday);fa_holiday
+fr_holiday = fa_holiday/sum(fa_holiday)
+dist_holiday = cbind(fa_holiday, fr_holiday);dist_holiday
+```
+- Analisando dias da semana
+
+A nossa amostra tivemos proporção dos dias da semana, contendo assim praticamente uma semana inteira ao longo das observações
+
+```{r}
+fa_weekday = table(weekday);fa_weekday
+fr_weekday = fa_weekday/sum(fa_weekday);fr_weekday
+dist_weekday = cbind(fa_weekday, fr_weekday);
+dist_weekday
+```
+- Analisando dias de trabalho
+
+Pela amostra temos que 500 dias foram de trabalho, e 231 dias de folga
+
+```{r}
+fa_workingday = table(workingday);fa_workingday
+fr_workingday = fa_workingday/sum(fa_workingday);fr_workingday
+dist_workingday = cbind(fa_workingday, fr_workingday);
+dist_workingday
+```
+- Analisando clima
+
+463 dias foram: Clear, Few clouds, Partly cloudy, Partly cloudy
+247 dias foram: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+21 dias foram: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+
+e não tivemos nenhuma obseervação sendo Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+
+```{r}
+fa_weathersit = table(weathersit);fa_weathersit
+fr_weathersit = fa_weathersit/sum(fa_weathersit);fr_weathersit
+dist_weathersit = cbind(fa_weathersit, fr_weathersit);
+dist_weathersit
+```
+- Analisando estação do ano
+
+```{r}
+fa_season = table(season);fa_season
+fr_season = fa_season/sum(fa_season);fr_season
+dist_season = cbind(fa_season, fr_season);
+dist_season
+```
+
+- Aplicando a correlação de Pearson
+
+As variáveis que possuem uma correlação com a variável target cnt são temp e atemp. Estas correlações são positivas mas com média correlação. 
+
+Já hum e windspeed tem correlação negativa bem fraca. 
+
+
+```{r}
+dadosquant <- select_if(ds, is.numeric)
+dadosquant <- subset(dadosquant, select=c(cnt,temp,atemp, hum, windspeed))
+mc = cor(dadosquant); mc
+```
+```{r}
+corrplot(mc)
+
+```
+
+
+```{r}
+corrplot(mc, type="upper", method = "number")
+```
+
+- Preparando a base para modar um modelo de regressão linear multipla
+
+- Apagando variáveis
+
+```{r}
+ds$instant = NULL
+ds$dteday = NULL
+ds$casual = NULL
+ds$registered = NULL
+ds$fx_cont = NULL
+ds
+```
+
+- Criando variáveis dicotômicas com variável qualitativa
+
+```{r}
+#ds$season1 = season
+#ds$season1 = ifelse(season==1,"1","0")
+ds$season2 = season
+ds$season2 = ifelse(season==2,"1","0")
+ds$season3 = season
+ds$season3 = ifelse(season==3,"1","0")
+ds$season4 = season
+ds$season4 = ifelse(season==4,"1","0")
+
+#ds$weathersit1 = weathersit
+#ds$weathersit1 = ifelse(weathersit==1,"1","0")
+ds$weathersit2 = weathersit
+ds$weathersit2 = ifelse(weathersit==2,"1","0")
+ds$weathersit3 = weathersit
+ds$weathersit3 = ifelse(weathersit==3,"1","0")
+
+#ds$mnth1 = mnth
+#ds$mnth1 = ifelse(mnth==1,"1","0")
+ds$mnth2 = mnth
+ds$mnth2 = ifelse(mnth==2,"1","0")
+ds$mnth3 = mnth
+ds$mnth3 = ifelse(mnth==3,"1","0")
+ds$mnth4 = mnth
+ds$mnth4 = ifelse(mnth==4,"1","0")
+ds$mnth5 = mnth
+ds$mnth5 = ifelse(mnth==5,"1","0")
+ds$mnth6 = mnth
+ds$mnth6 = ifelse(mnth==6,"1","0")
+ds$mnth7 = mnth
+ds$mnth7 = ifelse(mnth==7,"1","0")
+ds$mnth8 = mnth
+ds$mnth8 = ifelse(mnth==8,"1","0")
+ds$mnth9 = mnth
+ds$mnth9 = ifelse(mnth==9,"1","0")
+ds$mnth10 = mnth
+ds$mnth10 = ifelse(mnth==10,"1","0")
+ds$mnth11 = mnth
+ds$mnth11 = ifelse(mnth==11,"1","0")
+ds$mnth12 = mnth
+ds$mnth12 = ifelse(mnth==12,"1","0")
+```
+
+Apagando mais variáveis
+
+```{r}
+ds$season = NULL
+ds$mnth = NULL
+ds$weathersit = NULL
+ds$weekday = NULL
+ds$temp_atemp = NULL
+```
+
+Modelo
+
+- Dividindo amostra de treino e validação
+
+```{r}
+set.seed(2021)
+train <- sample(nrow(ds), 0.7*nrow(ds), replace=FALSE)
+TrainSet <- ds[train,]
+ValidSet <- ds[-train,]
+
+attach(TrainSet)
+```
+
+- Criando Modelo
+
+```{r}
+modelo <-lm(cnt ~ . , data = TrainSet)
+summary(modelo)
+```
+ - Selecionando melhores variáveis
+ 
+ - Pegando as variáveis mais significativas
+ 
+```{r}
+modelo_stepwise <- step(modelo, direction = "both")
+summary(modelo_stepwise)
+```
+- Predizendo e criando residuo
+
+```{r}
+TrainSet$Val_pred <- predict(modelo_stepwise, interval = "prediction", level = 0.95)
+TrainSet$residuo <- resid(modelo_stepwise)
+TrainSet$rp <- rstandard(modelo_stepwise)
+```
+ 
+- Calculando o erro do modelo
+
+```{r}
+mse <- mean((TrainSet$cnt - TrainSet$Val_pred)^2)
+mse
+```
+- Verificando atraves do teste de Shapiro se os erros seguem ou não uma distribuição normal, e se ele tem outliers
+
+p-value << 0 logo nosso modelo não é significante
+
+```{r}
+shapiro.test(residuals(modelo_stepwise))
+```
+- Aplicando um novo conjunto de teste para criação do modelo
+
+```{r}
+TrainSetNovo <- filter(TrainSet, TrainSet$rp >=-2& TrainSet$rp<=2)
+```
+- Apagando colunas criadas ao executar modelo
+
+```{r}
+TrainSetNovo$Val_pred = NULL
+TrainSetNovo$residuo = NULL
+TrainSetNovo$rp = NULL
+```
+
+- Criando modelo
+
+```{r}
+modeloNovo = lm(cnt ~ ., data = TrainSetNovo)
+summary(modeloNovo)
+```
+
+- Modelo novo com variáveis significativas
+
+```{r}
+modeloNovo_stepwise <- step(modeloNovo, direction = "both")
+summary(modeloNovo_stepwise)
+```
+- Predizendo e criando residuo
+
+```{r}
+TrainSetNovo$Val_pred <- predict(modeloNovo_stepwise, interval = "prediction", level = 0.95)
+TrainSetNovo$residuo <- resid(modeloNovo_stepwise)
+TrainSetNovo$rp <- rstandard(modeloNovo_stepwise)
+```
+ 
+- Calculando o erro do modelo
+
+```{r}
+mseNovo <- mean((TrainSetNovo$cnt - TrainSetNovo$Val_pred)^2)
+sqrt(mseNovo)
+```
+Modelo final
+
+```{r}
+summary(modeloNovo_stepwise)
+```
+
+Conclusão do trabalho
+
+Conseguimos chegar em uma formula de regressão linear, com isto podemos passar os parametros para o modelo e iriamos conseguir predizer a quantidade de bike necessárias no dia.
+
+A formula final do model é:
+
+y = Bo + B1 * x1 + B2 * x2...
+
+y = 	1759,51 +
+      yr1	* 2145,45 +
+      holiday1 * 	-931,36 +
+      temp *	3111,45 +
+      atemp *	1730,81 +
+      hum  * 	-1539,71 +
+      windspeed	* -2854,5 +
+      season21 *	845,06 +
+      season31 *	794,9 +
+      season41 *	1464,27 + 
+      weathersit21 *	-426,39 +
+      weathersit31 *	-1655,08 +
+      mnth31 *	396,48 +
+      mnth41 *	385,08 +
+      mnth51 *	740,93 +
+      mnth61 *	519,81 +
+      mnth81 *	402,62 +
+      mnth91 *	852,19 +
+      mnth101 *	622,66
